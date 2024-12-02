@@ -10,8 +10,8 @@ from huggingface_hub import HfApi
 load_dotenv()
 
 # Hugging Face Configurations
-HF_TOKEN = os.getenv("HF_TOKEN") # Replace with your token
-REPO_ID = os.getenv("REPO_ID") # Replace with your repo ID
+HF_TOKEN = os.getenv("HF_TOKEN")  # Replace with your token
+REPO_ID = os.getenv("REPO_ID")  # Replace with your repo ID
 
 # Reddit API Configuration
 reddit = praw.Reddit(
@@ -163,6 +163,7 @@ def scrape_daily_post_threads(post_ids):
 
     return threads_data
 
+
 def get_index_thread_ids(username, days):
     user = reddit.redditor(username)
     thread_ids = []
@@ -175,6 +176,7 @@ def get_index_thread_ids(username, days):
         if len(thread_ids) == days * 3:  # 3 posts a day, stop if we have enough threads
             break
     return thread_ids
+
 
 def upload_to_huggingface(file_path, repo_id):
     """
@@ -193,6 +195,7 @@ def upload_to_huggingface(file_path, repo_id):
         print(f"Uploaded {file_path} to {repo_id}")
     except Exception as e:
         print(f"Failed to upload {file_path}: {e}")
+
 
 # Usage Example
 if __name__ == "__main__":
