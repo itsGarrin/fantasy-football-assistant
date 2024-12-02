@@ -30,7 +30,7 @@ def extract_links_from_post(submission_id):
     full_text = submission.selftext
 
     # Regex pattern to match markdown links starting with "Official:"
-    pattern = r'\[Official:.*?\]\((/r/fantasyfootball/comments/[^\)]+)\)'
+    pattern = r"\[Official:.*?\]\((/r/fantasyfootball/comments/[^\)]+)\)"
     matches = re.findall(pattern, full_text)
 
     # Prepend "https://reddit.com" to convert relative links to absolute URLs
@@ -48,10 +48,12 @@ def collect_answers_from_comment(comment, question_id):
         if comment.body.lower() == "[deleted]" or not comment.author:
             return []
 
-        answers.append({
-            "answer": comment.body,
-            "author": comment.author.name if comment.author else "Deleted"
-        })
+        answers.append(
+            {
+                "answer": comment.body,
+                "author": comment.author.name if comment.author else "Deleted",
+            }
+        )
 
     # If there are replies to this comment, recursively collect them
     for reply in comment.replies:
@@ -83,7 +85,9 @@ def scrape_thread_content(thread_url):
         if comment.body.lower() == "[deleted]" or not comment.author:
             continue
 
-        if comment.score >= 0 and comment.parent_id == f"t3_{thread_id}":  # Only include parent comments (questions)
+        if (
+            comment.score >= 0 and comment.parent_id == f"t3_{thread_id}"
+        ):  # Only include parent comments (questions)
             question = comment.body
             question_author = comment.author.name if comment.author else "Deleted"
 
@@ -92,11 +96,13 @@ def scrape_thread_content(thread_url):
 
             # If there are any answers, add the question and answers to the list
             if answers:
-                thread_content["qa_pairs"].append({
-                    "question": question,
-                    "question_author": question_author,
-                    "answers": answers
-                })
+                thread_content["qa_pairs"].append(
+                    {
+                        "question": question,
+                        "question_author": question_author,
+                        "answers": answers,
+                    }
+                )
 
     return thread_content
 
@@ -133,7 +139,7 @@ def scrape_daily_post_threads(post_ids):
         "WDIS_QB": [],
         "WDIS_RB": [],
         "WDIS_WR": [],
-        "General": []
+        "General": [],
     }
 
     for post_id in post_ids:
@@ -152,14 +158,16 @@ def scrape_daily_post_threads(post_ids):
                 question = qa_pair["question"]
                 question_author = qa_pair["question_author"]
                 for answer in qa_pair["answers"]:
-                    threads_data[thread_type].append({
-                        "thread_title": thread_data["title"],
-                        "thread_url": thread_data["url"],
-                        "question": question,
-                        "question_author": question_author,
-                        "answer": answer["answer"],
-                        "answer_author": answer["author"]
-                    })
+                    threads_data[thread_type].append(
+                        {
+                            "thread_title": thread_data["title"],
+                            "thread_url": thread_data["url"],
+                            "question": question,
+                            "question_author": question_author,
+                            "answer": answer["answer"],
+                            "answer_author": answer["author"],
+                        }
+                    )
 
     return threads_data
 
@@ -169,7 +177,9 @@ def get_index_thread_ids(username, days):
     thread_ids = []
     cutoff_date = datetime.now(UTC) - timedelta(days=days)
     for submission in user.submissions.new(limit=None):
-        submission_time = datetime.fromtimestamp(submission.created_utc, tz=timezone.utc)
+        submission_time = datetime.fromtimestamp(
+            submission.created_utc, tz=timezone.utc
+        )
 
         if "Index" in submission.title and submission_time > cutoff_date:
             thread_ids.append(submission.id)
