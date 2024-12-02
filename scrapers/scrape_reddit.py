@@ -207,7 +207,7 @@ if __name__ == "__main__":
     for thread_type, thread_list in threads.items():
         if thread_list:  # Only save files that have data
             df = pd.DataFrame(thread_list)
-            file_name = f"parquet/{thread_type}_qa_pairs.parquet"
+            file_name = f"../parquet/{thread_type}_qa_pairs.parquet"
             df.to_parquet(file_name, index=False)
 
             # Upload the file to Hugging Face
