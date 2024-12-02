@@ -15,16 +15,27 @@ def print_benchmark(benchmark_data):
             print(f"  A: {qa['answer']}")
         print()
 
+def calculate_accuracy(benchmark_data, nfl_interface):
+    total_questions = 0
+    correct_answers = 0
+
+    for category, qa_pairs in benchmark_data.items():
+        for qa in qa_pairs:
+            user_input = qa['question']
+            expected_answer = qa['answer']
+            result = nfl_interface.test_interface(user_input, expected_answer)
+            if result:
+                correct_answers += 1
+            total_questions += 1
+
+    accuracy = (correct_answers / total_questions) * 100
+    return accuracy
+
 if __name__ == "__main__":
-    benchmark_file = 'benchmarking/benchmark.yaml'
+    benchmark_file = '../benchmarking/benchmark.yaml'
     benchmark_data = load_benchmark(benchmark_file)
     print_benchmark(benchmark_data)
 
     nfl_interface = NFLInterface()
-    for category, qa_pairs in benchmark_data.items():
-        for qa in qa_pairs:
-            user_input = qa['question']
-            res = nfl_interface.test_interface(qa['question'], qa['answer'], verbose=False)
-            print(res)
-            print(f"Expected Answer: {qa['answer']}")
-            print()
+    accuracy = calculate_accuracy(benchmark_data, nfl_interface)
+    print(f"Accuracy: {accuracy:.2f}%")
