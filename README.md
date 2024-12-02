@@ -1,1 +1,1 @@
-# fantasy-football-assistant
+# fantasy-football-llm-assistant
