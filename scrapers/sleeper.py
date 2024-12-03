@@ -186,13 +186,145 @@ def get_transactions(league, player_data, week):
     return readable_transactions
 
 
+def get_trending_players(sport="nfl", add_drop="add", hours=24, limit=25):
+    """Retrieve trending players on the waiver wire with more detailed player information."""
+    players = Players()
+
+    # Get all player data
+    player_data = players.get_all_players()
+
+    # Get trending players
+    trending_players = players.get_trending_players(sport=sport, add_drop=add_drop, hours=hours, limit=limit)
+
+    trending_players_info = []
+
+    for player in trending_players:
+        player_id = player.get("player_id")
+
+        # Get player details from all players data
+        player_details = player_data.get(player_id)
+
+        if player_details:
+            player_info = {
+                "player_id": player_id,
+                "full_name": player_details.get("full_name", "Unknown"),
+                "team": player_details.get("team", "Unknown Team"),
+                "position": player_details.get("position", "Unknown"),
+                "trend_type": add_drop  # 'add' or 'drop'
+            }
+            trending_players_info.append(player_info)
+
+    return trending_players_info
+
+
+def get_league_settings(league):
+    """
+    Retrieve important league settings and scoring type.
+
+    Args:
+        league: Sleeper League object.
+
+    Returns:
+        A dictionary containing key league settings.
+    """
+    league_settings = league.get_league()
+
+    # Extract only the important settings
+    key_settings = {
+        "name": league_settings.get("name", "Unknown League"),
+        "season": league_settings.get("season", "Unknown Season"),
+        "roster_positions": league_settings.get("roster_positions", []),
+        "scoring_settings": league_settings.get("scoring_settings", "Unknown"),
+        "num_teams": league_settings.get("total_rosters", 0),
+        "playoff_week_start": league_settings.get("settings", {}).get("playoff_week_start", "Unknown"),
+        "status": league_settings.get("status", "Unknown"),
+    }
+
+    return key_settings
+
+
+def get_top_waiver_wire_players_by_position(league, season_type, season, week, player_data, top_n=10,
+                                            scoring_format="ppr"):
+    """
+    Retrieve the top waiver wire players with the highest point projections for a given week, stratified by fantasy positions.
+
+    Args:
+        league: Sleeper League object.
+        season_type: Type of season ("regular" or "post").
+        season: The current season year.
+        week: The week for which projections are needed.
+        player_data: Dictionary of all player data.
+        top_n: Number of top players to return per position.
+        scoring_format: Scoring format (e.g., "ppr").
+
+    Returns:
+        Dictionary stratified by fantasy position, each containing a list of top players and their projected points.
+    """
+    from sleeper_wrapper import Stats
+
+    # Initialize Stats
+    stats = Stats()
+
+    # Define valid fantasy positions
+    fantasy_positions = {"QB", "RB", "WR", "TE", "K", "DEF"}
+
+    # Get projections for the specified week
+    week_projections = stats.get_week_projections(season_type, season, week)
+
+    # Get league rosters to identify players already rostered
+    rosters = league.get_rosters()
+    rostered_players = {player_id for roster in rosters for player_id in roster.get("players", [])}
+
+    # Filter waiver wire players and get projections stratified by position
+    waiver_wire_projections = {}
+    for player_id, projection_data in week_projections.items():
+        if player_id not in rostered_players:
+            projected_points = projection_data.get(f"pts_{scoring_format}", 0)
+            player_name = player_data.get(player_id, {}).get("full_name", "Unknown")
+            team = player_data.get(player_id, {}).get("team", "Unknown Team")
+            position = player_data.get(player_id, {}).get("position", "Unknown")
+
+            if position in fantasy_positions:
+                if position not in waiver_wire_projections:
+                    waiver_wire_projections[position] = []
+
+                waiver_wire_projections[position].append({
+                    "player_name": player_name,
+                    "team": team,
+                    "projected_points": projected_points
+                })
+
+    # Sort and truncate the top N players for each position
+    stratified_top_players = {
+        position: sorted(players, key=lambda x: x["projected_points"], reverse=True)[:top_n]
+        for position, players in waiver_wire_projections.items()
+    }
+
+    return stratified_top_players
+
+
 def main():
     league_id = 1131774234440876032
     league = League(league_id)
 
+    # Get league settings
+    league_settings = get_league_settings(league)
+    print("\nLeague Settings:")
+    print(json.dumps(league_settings, indent=4))
+
     # Get all player data
     players = Players()
     player_data = players.get_all_players()
+
+    # Assuming `league`, `season_type`, `season`, `week`, and `player_data` are already defined
+    top_waiver_players_by_position = get_top_waiver_wire_players_by_position(league, "regular", 2024, 13, player_data,
+                                                                             top_n=5)
+
+    print("\nTop Waiver Wire Players by Position for Week 13:")
+    for position, players in top_waiver_players_by_position.items():
+        print(f"\nPosition: {position}")
+        for player in players:
+            print(f"{player['player_name']} ({player['team']}): {player['projected_points']} projected points")
 
     # Fetch and display league users
     users = league.get_users()
