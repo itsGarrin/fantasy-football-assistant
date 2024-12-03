@@ -151,11 +151,9 @@ class NFLInterface:
 
         return build_prompt
 
-    def test_interface(self):
-
-        example_prompt = "Will Patrick Mahomes score more than 2 TDs next game?"
-        res = self.build_prompt(example_prompt, verbose=False)
-        print(res)
+    def test_interface(self, prompt: str, answer: str):
+        res = self.build_prompt(prompt, verbose=False)
+        return res == answer
 
 
 nfl_interface = NFLInterface()
