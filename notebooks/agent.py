@@ -8,6 +8,7 @@ from ollama import ChatResponse
 from ollama import chat
 from openai import OpenAI
 
+from scrapers.sleeper import get_league_info
 from tools.fantasycalc import get_value
 from tools.nflstats import get_nfl_stats
 from tools.sleeper import get_player_projected_points
@@ -33,6 +34,8 @@ For any players a user asks about, you should call both the get_value and get_nf
 If you can't find a player or are unsure of who they mean, ask the user for clarification on the name of the player.
 Always answer the user's question to the best of your ability.
 """
+
+SYSTEM_PROMPT += get_league_info()
 
 available_functions = {
     'get_value': get_value,

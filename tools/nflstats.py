@@ -2,7 +2,7 @@ import json
 
 import nfl_data_py as nfl
 
-import utils
+import tools.utils as utils
 
 stats = nfl.import_weekly_data([2024])
 

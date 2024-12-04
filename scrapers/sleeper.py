@@ -301,18 +301,18 @@ def get_top_waiver_wire_players_by_position(league, season_type, season, week, p
     return stratified_top_players
 
 
-def main():
+def get_league_info():
     league_id = 1131774234440876032
     league = League(league_id)
 
     # Get league settings
     league_settings = get_league_settings(league)
-    scoring_type = league_settings.get("scoring_settings", "Unknown").get("rec", "Unknown")
+    scoring_type = league_settings.get("scoring_settings", {}).get("rec", "Unknown")
     num_teams = league_settings.get("num_teams", 0)
     playoff_week_start = league_settings.get("playoff_week_start", "Unknown")
-    print(f"\nLeague is a {scoring_type} PPR, {num_teams}-team league.")
+    result = f"League is a {scoring_type} PPR, {num_teams}-team league.\n"
     if playoff_week_start != "Unknown":
-        print(f"Playoffs start in Week {playoff_week_start}.\n")
+        result += f"Playoffs start in Week {playoff_week_start}.\n\n"
 
     # Get all player data
     players = Players()
@@ -327,15 +327,11 @@ def main():
     user_roster = get_team_roster(team_name, league, player_data)
 
     if user_roster:
-        print(f"\nYour Team: {user_roster['team_name']}")
-        #print(f"Record: {user_roster.get('settings', {}).get('wins', 0)}-{user_roster.get('settings', {}).get('losses', 0)}")
-        #print(f"Points For: {user_roster.get('settings', {}).get('fpts', 0)}")
-        #print("Starters:", ", ".join(user_roster.get("starters", [])))
-        #print("Bench:", ", ".join(user_roster.get("players", [])))
+        result += f"Your Team: {user_roster['team_name']}\n\n"
     else:
-        print(f"No team found with the name '{team_name}'.")
+        result += f"No team found with the name '{team_name}'.\n\n"
 
-    print("Teams and Records:")
+    result += "Teams and Records:\n"
     for roster in rosters:
         team_name = get_team_name_from_roster_id(roster["roster_id"], league)
         wins = roster.get("settings", {}).get("wins", 0)
@@ -345,33 +341,11 @@ def main():
             get_player_name_from_id(player_id, player_data) for player_id in roster.get("players", [])
         ]
 
-        print(f"- {team_name}: {wins}-{losses} record, {points_for} points for")
-        print(f"  Roster: {', '.join(players_list)}")
+        result += f"- {team_name}: {wins}-{losses} record, {points_for} points for\n"
+        result += f"  Roster: {', '.join(players_list)}\n"
 
-    # Fetch weekly matchups
-    week = int(input("\nEnter week number for matchups: "))
-    matchups = get_matchups(league, week, player_data)
-    print(f"\nMatchups for Week {week}:")
-    for matchup in matchups:
-        print(f"Matchup: {matchup['team1_name']} vs {matchup['team2_name']}")
-        print(f"  {matchup['team1_name']} Players: {', '.join(matchup['team1_players'])}")
-        print(f"  {matchup['team2_name']} Players: {', '.join(matchup['team2_players'])}")
-        print(f"  Points: {matchup['points']}")
-
-    # Fetch top trending players
-    print("\nTop Waiver Wire Players:")
-    trending_players = get_trending_players()
-    for player in trending_players[:10]:  # Limit to top 10
-        print(f"{player['full_name']} ({player['team']}, {player['position']}), Trend: {player['trend_type']}")
-
-    # Fetch player scores for the given week
-    season_type = "regular"
-    season = 2024
-    player_scores = get_player_scores(league, player_data, season_type, season, week)
-    print("\nTop Player Scores:")
-    for score in sorted(player_scores, key=lambda x: x['actual_score'], reverse=True)[:10]:  # Top 10 scores
-        print(f"{score['player_name']}: {score['actual_score']} pts (Proj: {score['projected_score']} pts)")
+    return result
 
 
 if __name__ == "__main__":
-    main()
+    get_league_info()
