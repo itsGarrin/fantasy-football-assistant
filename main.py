@@ -6,6 +6,7 @@ from enum import Enum
 import pandas as pd
 import os
 from openai import OpenAI
+from thefuzz import fuzz
 
 SYSTEM_PROMPT = """
 You are a helpful fantasy football assisant. You have access to the latest NFL stats and rankings. 
@@ -81,35 +82,25 @@ class NFLInterface:
         assert self.stats is not None
         assert self.all_players_list is not None
 
-    # n_rows = number of previous weeks stats to give GPT
-    def get_nfl_stats(self, player_name, n_rows=10):
-        player_stats = self.stats[self.stats["player_display_name"] == player_name]
-        first_n_rows = player_stats.to_dict(orient='records')
-        first_n_rows.reverse()
-        first_n_rows = first_n_rows[:n_rows]
-        keys_to_remove = []
-        stats_string = '\n'
-        stats_string += f'---------- Recent Stats for {player_name} ----------\n'
-        for elem in first_n_rows:
-            for key in keys_to_remove:
-                elem.pop(key, None)
-            stats_string += json.dumps(elem)
-            stats_string += '\n'
-        stats_string += '-----------------------------------------------\n'
-        return stats_string
-    
-    # gets a ranking of a player 
-    def get_ranking(self, player_name):
-        # read from csv file python
-        # df = pd.read_csv(f'fantasy_calc_rankings/{self.league_type_string}_{self.ppr_value}_{self.league_size}.csv', sep=';')
-        df = pd.read_csv('fantasy_calc_rankings/fantasycalc_redraft_rankings.csv', sep=';')
-        df = df[df['name'] == player_name]
+    # converts a player name using fuzzy matching
+    def convert_player_name(self, player_name: str) -> str:
+        all_players_list = self.stats["player_display_name"].unique().tolist()
 
-        # get the value and overallRank from the df
-        value = df['value'].iloc[0]
-        overallRank = df['overallRank'].iloc[0]
+        # calculate similarity scores between the player_name and all_players_list
+        similarity_scores = []
 
-        return value, overallRank
+        for player in all_players_list:
+            similarity_scores.append((player, fuzz.ratio(player_name, player)))
+
+        # sort the similarity scores
+        similarity_scores.sort(key=lambda x: x[1], reverse=True)
+
+        # if the similarity score is greater than 80, return the player name
+        if similarity_scores[0][1] > 80:
+            return similarity_scores[0][0]
+        else:
+            return player_name
+
 
     def find_player_name(self, user_prompt_text):
         pattern = r'\b(?:' + '|'.join(re.escape(name) for name in self.all_players_list) + r')\b'
@@ -133,8 +124,7 @@ class NFLInterface:
 
         self.client.beta.chat.completions.create(
             model="meta-llama/Meta-Llama-3.1-8B-Instruct",
-            messages=self.conversation,
-            tools
+            messages=self.conversation
         )
 
         self.client.chat.completions.create(

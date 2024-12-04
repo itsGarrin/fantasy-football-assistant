@@ -1,6 +1,6 @@
 import yaml
 
-from main import NFLInterface
+from notebooks.agent import NFLAgent
 
 
 def load_benchmark(file_path):
@@ -36,6 +36,6 @@ if __name__ == "__main__":
     benchmark_data = load_benchmark(benchmark_file)
     print_benchmark(benchmark_data)
 
-    nfl_interface = NFLInterface()
+    nfl_interface = NFLAgent()
     accuracy = calculate_accuracy(benchmark_data, nfl_interface)
     print(f"Accuracy: {accuracy:.2f}%")
