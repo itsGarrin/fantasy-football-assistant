@@ -1,14 +1,18 @@
-from ollama import chat
-from ollama import ChatResponse
-import pandas as pd
 import json
-import nfl_data_py as nfl
-from openai import OpenAI
 import os
-from dotenv import load_dotenv
-from fuzzywuzzy import fuzz
-from fuzzywuzzy import process
+
+import nfl_data_py as nfl
 import yaml
+from dotenv import load_dotenv
+from ollama import ChatResponse
+from ollama import chat
+from openai import OpenAI
+
+from tools.fantasycalc import get_value
+from tools.nflstats import get_nfl_stats
+from tools.sleeper import get_player_projected_points
+from tools.sleeper import get_player_total_projected_points
+
 # TODO:
 # presentation, streamlit app
 # get benchmarking working 
@@ -19,95 +23,6 @@ load_dotenv()
 
 stats = nfl.import_weekly_data([2024])
 ids = nfl.import_ids()
-
-def convert_player_name(player_name: str) -> str:
-    all_players_list = stats["player_display_name"].unique().tolist()
-
-    scores = process.extract(player_name, all_players_list, scorer=fuzz.token_set_ratio, limit=5)
-
-
-    print(scores[0], scores[1])
-
-    # if the similarity score is greater than 80, return the player name
-    if scores[0][1] > 50:
-        return scores[0][0]
-    else:
-        return player_name
-
-
-def get_value(player_name: str) -> str:
-    """
-    Gets the value of a fantasy football player, from fantasycalc.com
-
-    Args:
-      player_name (str): The name of the player
-
-    Returns:
-       int: The value of a player ranging from 0-10000
-    """
-    player_name = convert_player_name(player_name)
-    try:
-        sleeper_id = ids[ids["name"] == player_name]["sleeper_id"].iloc[0]
-    except IndexError:
-        return "The value of " + player_name + " is either not available or equal to 0."
-    
-    # read from csv file python
-    # df = pd.read_csv(f'fantasy_calc_rankings/{self.league_type_string}_{self.ppr_value}_{self.league_size}.csv', sep=';')
-    df = pd.read_csv('../fantasy_calc_rankings/fantasycalc_redraft_rankings.csv', sep=';')
-    df = df[df['sleeperId'] == sleeper_id]
-
-    if df.empty:
-      return "The value of " + player_name + " is either not available or equal to 0."
-      return player_name + " not found"
-
-    # get the value and overallRank from the df
-    value = df['value'].iloc[0]
-    overallRank = df['overallRank'].iloc[0]
-
-    return "The value of " + player_name + " is " + str(value) + " which is ranked " + str(overallRank) + " at their position."
-
-def get_nfl_stats(player_name: str) -> str:
-    """
-    Gets the stats for the last n games of a player
-
-    Args:
-        player_name (str): The name of the player
-
-    Returns:
-        str: The stats for the player
-    """
-    player_name = convert_player_name(player_name)
-
-    player_stats = stats[stats["player_display_name"] == player_name]
-
-    if player_stats.empty:
-        return player_name + " not found"
-
-    first_n_rows = player_stats.to_dict(orient='records')
-    first_n_rows.reverse()
-    first_n_rows = first_n_rows[:4]
-    keys_to_keep = ['recent_team', 'position', 'week', 'opponent_team', 'fantasy_points', 'passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receptions', 'receiving_yards', 'receiving_tds', 'fantasy_points_ppr']
-    stats_string = '\n'
-    stats_string += f'---------- Recent Stats for {player_name} ----------\n'
-    for elem in first_n_rows:
-        elem = {k: elem[k] for k in keys_to_keep}
-        # remove keys that are equal to 0 or None
-        keys_to_remove = [k for k, v in elem.items() if v == 0 or v is None]
-        
-        for key in keys_to_remove:
-            if elem["position"] == "QB" and key in ["passing_yards", "passing_tds", "interceptions"]:
-                continue
-            if elem["position"] == "RB" and key in ["rushing_yards", "rushing_tds"]:
-                continue
-            if elem["position"] == "WR" and key in ["receiving_yards", "receiving_tds"]:
-                continue
-            if elem["position"] == "TE" and key in ["receiving_yards", "receiving_tds"]:
-                continue
-            elem.pop(key, None)
-        stats_string += json.dumps(elem)
-        stats_string += '\n'
-    stats_string += '-----------------------------------------------\n'
-    return stats_string
 
 
 SYSTEM_PROMPT = """
@@ -120,8 +35,10 @@ Always answer the user's question to the best of your ability.
 """
 
 available_functions = {
-  'get_value': get_value,
-  'get_nfl_stats': get_nfl_stats,
+    'get_value': get_value,
+    'get_nfl_stats': get_nfl_stats,
+    'get_player_projected_points': get_player_projected_points,
+    'get_player_total_projected_points': get_player_total_projected_points
 }
 
 get_nfl_stats_tool = {
