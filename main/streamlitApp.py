@@ -1,65 +1,88 @@
 import streamlit as st
-from agent import NFLAgent
+import random
+import time
 
-# Initialize the NFLAgent
-nfl_agent = NFLAgent()
+from sleeper_wrapper import League
 
-# Set up the Streamlit app
-st.title("Fantasy Football Assistant")
-st.sidebar.title("Settings")
+from agent import NFLAgent  # Import your agent class
+import globals
 
-# Sidebar inputs for League ID and Team Name
-st.sidebar.header("League Information")
-league_id = st.sidebar.text_input("Enter your League ID", "")
-team_name = st.sidebar.text_input("Enter your Team Name", "")
+# Global variables to store league ID and team name
+global_league_id = None
+global_team_name = None
 
-# Chat interface
-st.header("Chat with your Fantasy Football Assistant")
-if not league_id or not team_name:
-    st.warning("Please enter your League ID and Team Name in the sidebar to get personalized advice.")
+
+# Streamed response emulator
+def response_generator():
+    response = random.choice(
+        [
+            "Hello there! How can I assist you today?",
+            "Hi, human! Is there anything I can help you with?",
+            "Do you need help?",
+        ]
+    )
+    for word in response.split():
+        yield word + " "
+        time.sleep(0.05)
+
+
+# Sidebar for league and team selection
+st.sidebar.title("Fantasy League Settings")
+
+# Step 1: Enter League ID
+global_league_id = st.sidebar.text_input("Enter League ID", key="league_id")
+
+# Step 2: Fetch teams if League ID is provided
+if global_league_id:
+    # Initialize a temporary agent to fetch teams
+    league = League(global_league_id)
+    users = league.get_users()
+
+    if users:
+        print(users)
+        display_names = [user["display_name"] for user in users if "display_name" in user]
+        # Step 3: Dropdown for team selection
+        global_team_name = st.sidebar.selectbox("Select Your Team", display_names, key="team_name")
+    else:
+        st.sidebar.error("No teams found for this League ID. Please check and try again.")
+        global_team_name = None
 else:
-    nfl_agent.reset()  # Reset the agent to start a new session
-    league_info_message = f"League ID: {league_id}, Team Name: {team_name}"
-    nfl_agent.messages.append({"role": "system", "content": league_info_message})
+    users = []
 
-# Chat history
-if "messages" not in st.session_state:
-    st.session_state["messages"] = []
+# Initialize the NFLAgent if League ID and Team Name are provided
+if global_league_id and global_team_name:
+    globals.set_league_id(global_league_id)
+    globals.set_team_name(global_team_name)
+    nfl_agent = NFLAgent()
+else:
+    nfl_agent = None
 
-# User input for chat
-user_input = st.text_input("Type your question here:")
-if st.button("Send"):
-    if user_input:
-        # Add user input to chat history
-        st.session_state["messages"].append({"role": "user", "content": user_input})
+# Display chat interface only if NFLAgent is initialized
+st.title("Fantasy Football Chat Assistant")
 
-        # Get response from NFLAgent
-        response = nfl_agent.run(user_input, verbose=False)
+if nfl_agent:
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-        # Add response to chat history
-        st.session_state["messages"].append({"role": "assistant", "content": response})
-        user_input = ""  # Clear the input box
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-# Display chat history
-st.write("### Chat History")
-for message in st.session_state["messages"]:
-    role = "User" if message["role"] == "user" else "Assistant"
-    st.markdown(f"**{role}:** {message['content']}")
+    # Accept user input
+    if prompt := st.chat_input("Ask me anything about your league or players!"):
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Display user message in chat message container
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-# Provide league-specific context if inputs are valid
-if league_id and team_name:
-    st.sidebar.markdown(f"**League ID:** {league_id}")
-    st.sidebar.markdown(f"**Team Name:** {team_name}")
-
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("You can now ask questions about your team or league matchups in the chat interface.")
-
-# Clear chat button
-if st.sidebar.button("Clear Chat"):
-    st.session_state["messages"] = []
-    st.success("Chat cleared!")
-
-# Debugging tools (optional)
-if st.sidebar.checkbox("Show Debug Information"):
-    st.subheader("Debug Information")
-    st.write("Agent Messages:", nfl_agent.messages)
+        # Use the agent to generate a response
+        response = nfl_agent.run(prompt)
+        with st.chat_message("assistant"):
+            st.markdown(response)
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response})
+else:
+    st.write("Please provide a valid League ID and select a team in the sidebar to start chatting.")

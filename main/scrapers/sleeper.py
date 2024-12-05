@@ -321,7 +321,6 @@ def get_league_info():
 
     # Fetch league users and their rosters
     rosters = league.get_rosters()
-    users = league.get_users()
 
     # Highlight user's team
     team_name = "itsGarrin"
