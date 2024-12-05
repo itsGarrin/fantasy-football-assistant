@@ -28,7 +28,6 @@ def get_value(player_name: str) -> str:
 
     if df.empty:
         return "The value of " + player_name + " is either not available or equal to 0."
-        return player_name + " not found"
 
     # get the value and overallRank from the df
     value = df['value'].iloc[0]
