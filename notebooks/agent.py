@@ -29,7 +29,7 @@ def convert_player_name(player_name: str) -> str:
     print(scores[0], scores[1])
 
     # if the similarity score is greater than 80, return the player name
-    if scores[0][1] > 50:
+    if scores[0][1] > 60:
         return scores[0][0]
     else:
         return player_name
@@ -234,9 +234,9 @@ class NFLAgent:
                             }]
         
     def test_interface(self, user_input, expected_output, verbose=False):
-        response = self.run_openai(user_input, verbose)
+        response = self.run(user_input, verbose)
         print(user_input, "\n")
-        print("Expected: " + expected_output, " Acutal: " + response, expected_output.upper() in response.upper())
+        print("Expected: " + expected_output, " Actual: " + response, expected_output.upper() in response.upper())
         print("\n")
         self.reset()
         return expected_output.upper() in response.upper()
@@ -284,7 +284,7 @@ def calculate_accuracy(benchmark_data, test_func):
 
 # print(calculate_accuracy(benchmark_data, basic_llama))
 # print(calculate_accuracy(benchmark_data, nfl_agent.test_interface))
-nfl_agent.test_interface("can you compare travis etienne to bucky irving?", "no", verbose=True)
+nfl_agent.test_interface("Should I start dionate johnson or brian thomas jr next week?", "no", verbose=True)
 
 
 # different prompts for 
@@ -293,3 +293,7 @@ nfl_agent.test_interface("can you compare travis etienne to bucky irving?", "no"
 # TODO:
 # have two gpts, one that has a different prompt about tooling, and another that has a different prompt about the nfl
 # future schedule with projected points and schedule difficulty
+
+
+
+# start doing few shot prompting? 
