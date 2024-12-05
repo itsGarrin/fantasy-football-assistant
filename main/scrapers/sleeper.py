@@ -40,7 +40,7 @@ def get_team_roster(team_name, league, player_data):
                         "starters": [
                             get_player_name_from_id(player_id, player_data) for player_id in roster.get("starters", [])
                         ],
-                        "roster_id": roster["roster_id"]
+                        "roster_id": roster["roster_id"],
                     }
     return None
 
@@ -326,25 +326,34 @@ def get_league_info():
     # Highlight user's team
     user_roster = get_team_roster(team_name, league, player_data)
 
+
+
     if user_roster:
-        result += f"Your Team: {user_roster['team_name']}\n\n"
+        result += f"Your Team: \n"
+        user_roster = [roster for roster in rosters if roster["roster_id"] == user_roster["roster_id"]][0]
+        result += stringify_roster(user_roster, league, player_data) + "\n\n"
     else:
         result += f"No team found with the name '{team_name}'.\n\n"
 
-    result += "Teams and Records:\n"
+    result += "Other Teams and Records:\n"
     for roster in rosters:
-        team_name = get_team_name_from_roster_id(roster["roster_id"], league)
-        wins = roster.get("settings", {}).get("wins", 0)
-        losses = roster.get("settings", {}).get("losses", 0)
-        points_for = roster.get("settings", {}).get("fpts", 0)
-        players_list = [
-            get_player_name_from_id(player_id, player_data) for player_id in roster.get("players", [])
-        ]
-
-        result += f"- {team_name}: {wins}-{losses} record, {points_for} points for\n"
-        result += f"  Roster: {', '.join(players_list)}\n"
+        if roster["roster_id"] == user_roster["roster_id"]:
+            continue
+        result += stringify_roster(roster, league, player_data) + "\n"
 
     return result
+
+
+def stringify_roster(roster, league, player_data):
+    team_name = get_team_name_from_roster_id(roster["roster_id"], league)
+    wins = roster.get("settings", {}).get("wins", 0)
+    losses = roster.get("settings", {}).get("losses", 0)
+    points_for = roster.get("settings", {}).get("fpts", 0)
+    players_list = [
+        get_player_name_from_id(player_id, player_data) for player_id in roster.get("players", [])
+    ]
+
+    return f"{team_name}: {wins}-{losses} record, {points_for} points for\nRoster: {', '.join(players_list)}"
 
 
 if __name__ == "__main__":

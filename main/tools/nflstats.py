@@ -6,7 +6,7 @@ import tools.utils as utils
 import globals
 stats = nfl.import_weekly_data([2024])
 
-def get_nfl_stats(player_name: str, num_games: int) -> str:
+def get_nfl_stats(player_name: str, num_games=4) -> str:
     """
     Gets the stats for the last n games of a player
 
@@ -17,6 +17,7 @@ def get_nfl_stats(player_name: str, num_games: int) -> str:
     Returns:
         str: The stats for the player
     """
+    print(player_name)
     player_name = utils.convert_player_name(player_name)
     num_games = int(num_games)
 

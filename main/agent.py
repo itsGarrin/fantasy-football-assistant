@@ -11,7 +11,7 @@ from openai import OpenAI
 from tools.fantasycalc import get_value, get_value_tool
 from tools.nflstats import get_nfl_stats, get_nfl_stats_tool
 from tools.sleeper import get_player_projected_points, get_player_projected_points_tool
-from tools.sleeper import get_player_total_projected_points, get_player_total_projected_points_tool
+from tools.sleeper import get_player_total_projected_points
 from scrapers.sleeper import get_league_info
 
 # TODO:
@@ -25,28 +25,47 @@ load_dotenv()
 stats = nfl.import_weekly_data([2024])
 ids = nfl.import_ids()
 
+TOOL_SYSTEM_PROMT = """
+You are a bot whose job is to provide an LLM with the data it needs to make informed decisions about fantasy football. 
+You are given a prompt and should call the appropriate tools to provide the necessary information.
+
+Try to call as many tools as possible to provide the most amount of information to the LLM. 
+Make sure the information is relevant to the prompt and the tools you are calling are appropriate for the task at hand.
+
+It is currently week 14 of the 2024 NFL season. The league the user is in is a 12 team PPR league. 
+There are 17 weeks in the fantasy season, and the playoffs are weeks 15,16,17.
+
+For the get_player_projected_points tool, make sure to provide week numbers as a comma separated string, for example, "12,13,14".
+"""
+
 
 SYSTEM_PROMPT = """
-You are a knowledgeable fantasy football assistant. When making decisions, do not use outside data, instead use the tools provided.
-Try to provide specific information about the players such as their value, stats, etc. 
-For any players a user asks about, you should call both the get_value and get_nfl_stats tools in addition to any other tools you think are necessary.
+You are a knowledgeable fantasy football assistant. You have been given a prompt and tools to help answer the user's question.
 
-If you can't find a player or are unsure of who they mean, ask the user for clarification on the name of the player.
 Always answer the user's question to the best of your ability.
+
+Try to call as many tools as possible to provide the most amount of information to the LLM. 
+Make sure the information is relevant to the prompt and the tools you are calling are appropriate for the task at hand.
+For the get_player_projected_points tool, make sure to provide week numbers as a comma separated string, for example, "12,13,14".
 
 It is currently week 14 of the 2024 NFL season. 
 
-The league the user is in is a 12 team PPR league.
+For each tool call, provide the information in a clear and concise manner. 
+
+A player name is a string that contains the full name of the player. For example, "Christian McCaffrey" is a valid player name. Do not use "player1" or "every player" as player names, or any variables.
+You can call tools as many times as you want.
+
+A good fantasy performance is a performance that is above average for that player's position.
+
+Use the Sleeper league information to provide context about the league the user is in. Always answer questions from the perspective of the users team.
 """
-get_league_info()
 # Use the Sleeper league information to provide context about the league the user is in. Always give advice in the perspective of the user and their opponents.
-# SYSTEM_PROMPT += get_league_info()
+SYSTEM_PROMPT += get_league_info()
 
 available_functions = {
     'get_value': get_value,
     'get_nfl_stats': get_nfl_stats,
     'get_player_projected_points': get_player_projected_points,
-    'get_player_total_projected_points': get_player_total_projected_points
 }
 
 class NFLAgent:
@@ -61,7 +80,7 @@ class NFLAgent:
         response: ChatResponse = chat(
             model='llama3.1',
             messages=self.messages,
-            tools=[get_value, get_nfl_stats, get_player_projected_points, get_player_total_projected_points],
+            tools=[get_value, get_nfl_stats, get_player_projected_points],
         )
 
         if response.message.tool_calls:
@@ -82,45 +101,11 @@ class NFLAgent:
             print(self.messages)
 
         # Get final response from model with function outputs
-        final_response = chat('llama3.1', messages=self.messages, tools=[get_value, get_nfl_stats, get_player_projected_points, get_player_total_projected_points])
+        final_response = chat('llama3.1', messages=self.messages, tools=[get_value, get_nfl_stats, get_player_projected_points])
         self.messages.append({'role': 'system', 'content': final_response.message.content})
         if verbose:
             print('Final response:', final_response.message.content)
         return final_response.message.content
-    
-    def run_openai(self, prompt, verbose=False):
-        self.messages.append({'role': 'user', 'content': prompt})
-        client = OpenAI(base_url=os.getenv("OLLAMA_URL"), api_key=os.getenv("KEY"))
-        response = client.chat.completions.create(
-            model="llama3.1",
-            messages=self.messages,
-            tools=[get_value_tool, get_nfl_stats_tool, get_player_projected_points_tool, get_player_total_projected_points_tool],
-        )
-
-        if response.choices[0].message.tool_calls:
-            for tool in response.choices[0].message.tool_calls:
-                if function_to_call := available_functions.get(tool.function.name):
-                    output = function_to_call(**json.loads(tool.function.arguments))
-                    if verbose:
-                        print('Calling function:', tool.function.name)
-                        print('Arguments:', tool.function.arguments)
-                        print('Function output:', output)
-                    self.messages.append({'role': 'tool', 'content': str(output), 'name': tool.function.name})
-                else:
-                    print('Function', tool.function.name, 'not found')
-        if verbose:
-            print(self.messages)
-
-        final_response = client.chat.completions.create(
-            temperature=0.85,
-            model="llama3.1",
-            messages=self.messages,
-            tools=[get_value_tool, get_nfl_stats_tool, get_player_projected_points_tool, get_player_total_projected_points_tool],)
-        self.messages.append({'role': 'system', 'content': final_response.choices[0].message.content})
-        if verbose:
-            print('Final response:', final_response.choices[0].message.content)
-
-        return final_response.choices[0].message.content
     
     def reset(self):
         self.messages = [{
@@ -179,7 +164,7 @@ def calculate_accuracy(benchmark_data, test_func):
 
 # print(calculate_accuracy(benchmark_data, basic_llama))
 # print(calculate_accuracy(benchmark_data, nfl_agent.test_interface))
-nfl_agent.run("How many points is Bijan Robinson projected next week?", verbose=True)
+nfl_agent.run("Can you get me the stats in the last 2 games for each player on my team?", verbose=True)
 
 
 # different prompts for 

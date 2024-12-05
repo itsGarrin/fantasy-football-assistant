@@ -1,11 +1,11 @@
 from sleeper_wrapper import Stats, Players
 import tools.utils as utils
+from typing import List
 import globals
 player_data = Players().get_all_players()
 season_type = "regular"
 
-
-def get_player_projected_points(player_name: str, season : int, week : int) -> str:
+def get_player_projected_points(player_name: str, season : int, weeks : str) -> str:
     """
     Retrieve the projected fantasy points for a specific player for the given match week.
 
@@ -15,8 +15,8 @@ def get_player_projected_points(player_name: str, season : int, week : int) -> s
         The full name of the player (case insensitive).
     season : int
         The season year (e.g., 2024).
-    week : int
-        The week number for which to retrieve projections (e.g., 1-17 for regular season).
+    week : str
+        The week numbers for which to retrieve projections. Must be a comma-separated string of week numbers, for example, "1,2,3".
 
     Returns:
     -------
@@ -38,19 +38,28 @@ def get_player_projected_points(player_name: str, season : int, week : int) -> s
     """
     player_name = utils.convert_player_name(player_name)
     stats = Stats()
-    week_projections = stats.get_week_projections(season_type, season, week)
+    print(weeks)
+    # convert comma-separated string to list of integers
+    weeks = list(map(int, weeks.split(",")))
 
     player_id = utils.convert_player_name_to_sleeper_id(player_name)
 
     if not player_id:
         return f"Player '{player_name}' not found."
-
+    
     scoring_format = utils.convert_scoring_type_to_text(globals.get_scoring_type())
 
-    print(week_projections.get(str(player_id), {}), player_id)
+    week_str = ""
 
-    projected_points = week_projections.get(str(player_id), {}).get(f"pts_{scoring_format}", 0)
-    return f"{player_name} is projected to score {projected_points} points in week {week}."
+
+    for week in weeks:
+        print(season_type, season, week)
+        week_projections = stats.get_week_projections(season_type, season, week)
+        projected_points = week_projections.get(str(player_id), {}).get(f"pts_{scoring_format}", 0)
+        week_str += f"According to Sleeper, {player_name} is projected to score {projected_points} points in week {week}.\n"
+
+    return week_str
+
 
 def get_player_total_projected_points(player_name, season, current_week, total_weeks=17, scoring_format="ppr"):
     """
@@ -119,31 +128,11 @@ get_player_projected_points_tool = {
         'description': 'Get the projected points for a player',
         'parameters': {
             'type': 'object',
-            'required': ['player_name', 'season_type', 'season', 'week'],
+            'required': ['player_name', 'season', 'weeks'],
             'properties': {
                 'player_name': {'type': 'string', 'description': 'The name of the player'},
                 'season': {'type': 'integer', 'description': 'The season year'},
-                'week': {'type': 'integer', 'description': 'The week number'},
-                'scoring_format': {'type': 'string', 'description': 'The scoring format'},
-            },
-        },
-    },
-}
-
-get_player_total_projected_points_tool = {
-    'type': 'function',
-    'function': {
-        'name': 'get_player_total_projected_points',
-        'description': 'Get the total projected points for a player',
-        'parameters': {
-            'type': 'object',
-            'required': ['player_name', 'season_type', 'season', 'current_week', 'total_weeks'],
-            'properties': {
-                'player_name': {'type': 'string', 'description': 'The name of the player'},
-                'season': {'type': 'integer', 'description': 'The season year'},
-                'current_week': {'type': 'integer', 'description': 'The current week'},
-                'total_weeks': {'type': 'integer', 'description': 'The total number of weeks'},
-                'scoring_format': {'type': 'string', 'description': 'The scoring format'},
+                'weeks': {'type': 'string', 'description': 'The week numbers for which to retrieve projections. Must be a comma-separated string of week numbers, for example, "1,2,3".'},
             },
         },
     },

@@ -20,7 +20,7 @@ def get_value(player_name: str) -> str:
     
     # read from csv file python
     # df = pd.read_csv(f'fantasy_calc_rankings/{self.league_type_string}_{self.ppr_value}_{self.league_size}.csv', sep=';')
-    df = pd.read_csv('../fantasy_calc_rankings/fantasycalc_redraft_rankings.csv', sep=';')
+    df = pd.read_csv('fantasy_calc_rankings/fantasycalc_redraft_rankings.csv', sep=';')
     df = df[df['sleeperId'] == sleeper_id]
 
     if df.empty:
