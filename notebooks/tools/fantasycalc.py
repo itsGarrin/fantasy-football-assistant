@@ -36,3 +36,19 @@ def get_value(player_name: str) -> str:
     overallRank = df['overallRank'].iloc[0]
 
     return "The value of " + player_name + " is " + str(value) + " which is ranked " + str(overallRank) + " at their position."
+
+
+get_value_tool = {
+    'type': 'function',
+    'function': {
+        'name': 'get_value',
+        'description': 'Get the value of a player',
+        'parameters': {
+            'type': 'object',
+            'required': ['player_name'],
+            'properties': {
+                'player_name': {'type': 'string', 'description': 'The name of the player'},
+            },
+        },
+    },
+}

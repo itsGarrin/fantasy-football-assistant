@@ -48,3 +48,19 @@ def get_nfl_stats(player_name: str) -> str:
         stats_string += '\n'
     stats_string += '-----------------------------------------------\n'
     return stats_string
+
+
+get_nfl_stats_tool = {
+    'type': 'function',
+    'function': {
+        'name': 'get_nfl_stats',
+        'description': 'Get the stats for a player',
+        'parameters': {
+            'type': 'object',
+            'required': ['player_name'],
+            'properties': {
+                'player_name': {'type': 'string', 'description': 'The name of the player'},
+            },
+        },
+    },
+}

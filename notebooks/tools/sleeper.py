@@ -110,3 +110,42 @@ def get_player_total_projected_points(player_name, season, current_week, total_w
         total_projected_points += week_projections.get(str(player_id), {}).get(f"pts_{scoring_format}", 0)
 
     return total_projected_points
+
+
+
+get_player_projected_points_tool = {
+    'type': 'function',
+    'function': {
+        'name': 'get_player_projected_points',
+        'description': 'Get the projected points for a player',
+        'parameters': {
+            'type': 'object',
+            'required': ['player_name', 'season_type', 'season', 'week'],
+            'properties': {
+                'player_name': {'type': 'string', 'description': 'The name of the player'},
+                'season': {'type': 'integer', 'description': 'The season year'},
+                'week': {'type': 'integer', 'description': 'The week number'},
+                'scoring_format': {'type': 'string', 'description': 'The scoring format'},
+            },
+        },
+    },
+}
+
+get_player_total_projected_points_tool = {
+    'type': 'function',
+    'function': {
+        'name': 'get_player_total_projected_points',
+        'description': 'Get the total projected points for a player',
+        'parameters': {
+            'type': 'object',
+            'required': ['player_name', 'season_type', 'season', 'current_week', 'total_weeks'],
+            'properties': {
+                'player_name': {'type': 'string', 'description': 'The name of the player'},
+                'season': {'type': 'integer', 'description': 'The season year'},
+                'current_week': {'type': 'integer', 'description': 'The current week'},
+                'total_weeks': {'type': 'integer', 'description': 'The total number of weeks'},
+                'scoring_format': {'type': 'string', 'description': 'The scoring format'},
+            },
+        },
+    },
+}

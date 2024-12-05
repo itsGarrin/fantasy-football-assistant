@@ -8,11 +8,11 @@ from ollama import ChatResponse
 from ollama import chat
 from openai import OpenAI
 
+from tools.fantasycalc import get_value, get_value_tool
+from tools.nflstats import get_nfl_stats, get_nfl_stats_tool
+from tools.sleeper import get_player_projected_points, get_player_projected_points_tool
+from tools.sleeper import get_player_total_projected_points, get_player_total_projected_points_tool
 from scrapers.sleeper import get_league_info
-from tools.fantasycalc import get_value
-from tools.nflstats import get_nfl_stats
-from tools.sleeper import get_player_projected_points
-from tools.sleeper import get_player_total_projected_points
 
 # TODO:
 # presentation, streamlit app
@@ -46,73 +46,6 @@ available_functions = {
     'get_player_total_projected_points': get_player_total_projected_points
 }
 
-get_nfl_stats_tool = {
-    'type': 'function',
-    'function': {
-        'name': 'get_nfl_stats',
-        'description': 'Get the stats for a player',
-        'parameters': {
-            'type': 'object',
-            'required': ['player_name'],
-            'properties': {
-                'player_name': {'type': 'string', 'description': 'The name of the player'},
-            },
-        },
-    },
-}
-
-get_value_tool = {
-    'type': 'function',
-    'function': {
-        'name': 'get_value',
-        'description': 'Get the value of a player',
-        'parameters': {
-            'type': 'object',
-            'required': ['player_name'],
-            'properties': {
-                'player_name': {'type': 'string', 'description': 'The name of the player'},
-            },
-        },
-    },
-}
-
-get_player_projected_points_tool = {
-    'type': 'function',
-    'function': {
-        'name': 'get_player_projected_points',
-        'description': 'Get the projected points for a player',
-        'parameters': {
-            'type': 'object',
-            'required': ['player_name', 'season_type', 'season', 'week'],
-            'properties': {
-                'player_name': {'type': 'string', 'description': 'The name of the player'},
-                'season': {'type': 'integer', 'description': 'The season year'},
-                'week': {'type': 'integer', 'description': 'The week number'},
-                'scoring_format': {'type': 'string', 'description': 'The scoring format'},
-            },
-        },
-    },
-}
-
-get_player_total_projected_points_tool = {
-    'type': 'function',
-    'function': {
-        'name': 'get_player_total_projected_points',
-        'description': 'Get the total projected points for a player',
-        'parameters': {
-            'type': 'object',
-            'required': ['player_name', 'season_type', 'season', 'current_week', 'total_weeks'],
-            'properties': {
-                'player_name': {'type': 'string', 'description': 'The name of the player'},
-                'season': {'type': 'integer', 'description': 'The season year'},
-                'current_week': {'type': 'integer', 'description': 'The current week'},
-                'total_weeks': {'type': 'integer', 'description': 'The total number of weeks'},
-                'scoring_format': {'type': 'string', 'description': 'The scoring format'},
-            },
-        },
-    },
-}
-
 class NFLAgent:
     def __init__(self):
         self.messages = [{
@@ -125,7 +58,7 @@ class NFLAgent:
         response: ChatResponse = chat(
             model='llama3.1',
             messages=self.messages,
-            tools=[get_value, get_nfl_stats],
+            tools=[get_value, get_nfl_stats, get_player_projected_points, get_player_total_projected_points],
         )
 
         if response.message.tool_calls:
@@ -146,7 +79,7 @@ class NFLAgent:
             print(self.messages)
 
         # Get final response from model with function outputs
-        final_response = chat('llama3.1', messages=self.messages, tools=[get_value, get_nfl_stats])
+        final_response = chat('llama3.1', messages=self.messages, tools=[get_value, get_nfl_stats, get_player_projected_points, get_player_total_projected_points])
         self.messages.append({'role': 'system', 'content': final_response.message.content})
         if verbose:
             print('Final response:', final_response.message.content)
@@ -158,7 +91,7 @@ class NFLAgent:
         response = client.chat.completions.create(
             model="llama3.1",
             messages=self.messages,
-            tools=[get_value_tool, get_nfl_stats_tool],
+            tools=[get_value_tool, get_nfl_stats_tool, get_player_projected_points_tool, get_player_total_projected_points_tool],
         )
 
         if response.choices[0].message.tool_calls:
@@ -179,7 +112,7 @@ class NFLAgent:
             temperature=0.85,
             model="llama3.1",
             messages=self.messages,
-            tools=[get_value_tool, get_nfl_stats_tool])
+            tools=[get_value_tool, get_nfl_stats_tool, get_player_projected_points_tool, get_player_total_projected_points_tool],)
         self.messages.append({'role': 'system', 'content': final_response.choices[0].message.content})
         if verbose:
             print('Final response:', final_response.choices[0].message.content)
@@ -243,7 +176,7 @@ def calculate_accuracy(benchmark_data, test_func):
 
 # print(calculate_accuracy(benchmark_data, basic_llama))
 # print(calculate_accuracy(benchmark_data, nfl_agent.test_interface))
-nfl_agent.test_interface("Should I start dionate johnson or brian thomas jr next week?", "no", verbose=True)
+nfl_agent.test_interface("Who is on my team?", "no", verbose=True)
 
 
 # different prompts for 
