@@ -1,6 +1,6 @@
 import yaml
 
-from notebooks.agent import NFLAgent
+from main.agent import NFLAgent
 
 
 def load_benchmark(file_path):
