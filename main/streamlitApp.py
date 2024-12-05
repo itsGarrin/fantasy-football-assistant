@@ -1,10 +1,11 @@
-import streamlit as st
 import random
 import time
 
+import streamlit as st
 from sleeper_wrapper import League
-from agent import NFLAgent  # Import your agent class
+
 import globals
+from agent import NFLAgent  # Import your agent class
 
 # Global variables to store league ID and team name
 global_league_id = None
