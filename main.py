@@ -1,10 +1,8 @@
-import nfl_data_py as nfl
-import json
-import datetime
+import os
 import re
 from enum import Enum
-import pandas as pd
-import os
+
+import nfl_data_py as nfl
 from openai import OpenAI
 from thefuzz import fuzz
 

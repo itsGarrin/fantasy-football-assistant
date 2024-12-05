@@ -1,5 +1,3 @@
-import json
-
 from sleeper_wrapper import League, Players, Stats
 
 
@@ -303,78 +301,51 @@ def get_top_waiver_wire_players_by_position(league, season_type, season, week, p
     return stratified_top_players
 
 
-def main():
+def get_league_info():
     league_id = 1131774234440876032
     league = League(league_id)
 
     # Get league settings
     league_settings = get_league_settings(league)
-    print("\nLeague Settings:")
-    print(json.dumps(league_settings, indent=4))
+    scoring_type = league_settings.get("scoring_settings", {}).get("rec", "Unknown")
+    num_teams = league_settings.get("num_teams", 0)
+    playoff_week_start = league_settings.get("playoff_week_start", "Unknown")
+    result = f"League is a {scoring_type} PPR, {num_teams}-team league.\n"
+    if playoff_week_start != "Unknown":
+        result += f"Playoffs start in Week {playoff_week_start}.\n\n"
 
     # Get all player data
     players = Players()
     player_data = players.get_all_players()
 
-    # Assuming `league`, `season_type`, `season`, `week`, and `player_data` are already defined
-    top_waiver_players_by_position = get_top_waiver_wire_players_by_position(league, "regular", 2024, 13, player_data,
-                                                                             top_n=5)
-
-    print("\nTop Waiver Wire Players by Position for Week 13:")
-    for position, players in top_waiver_players_by_position.items():
-        print(f"\nPosition: {position}")
-        for player in players:
-            print(f"{player['player_name']} ({player['team']}): {player['projected_points']} projected points")
-
-    # Fetch and display league users
+    # Fetch league users and their rosters
+    rosters = league.get_rosters()
     users = league.get_users()
-    print("\nAvailable Teams:")
-    for user in users:
-        print(f"- {user['display_name']}")
 
-    team_name = input("\nEnter team name to fetch roster: ")
-    team_roster = get_team_roster(team_name, league, player_data)
+    # Highlight user's team
+    team_name = "itsGarrin"
+    user_roster = get_team_roster(team_name, league, player_data)
 
-    if team_roster:
-        print("\nTeam Roster:")
-        print(json.dumps(team_roster, indent=4))
+    if user_roster:
+        result += f"Your Team: {user_roster['team_name']}\n\n"
     else:
-        print(f"No team found with the name '{team_name}'.")
+        result += f"No team found with the name '{team_name}'.\n\n"
 
-    # Fetch league standings
-    standings = get_league_standings(league, player_data)
-    print("\nLeague Standings:")
-    for standing in standings:
-        print(f"Team: {standing['team_name']}, Wins: {standing['wins']}, Losses: {standing['losses']}, Points For: {standing['points_for']}")
+    result += "Teams and Records:\n"
+    for roster in rosters:
+        team_name = get_team_name_from_roster_id(roster["roster_id"], league)
+        wins = roster.get("settings", {}).get("wins", 0)
+        losses = roster.get("settings", {}).get("losses", 0)
+        points_for = roster.get("settings", {}).get("fpts", 0)
+        players_list = [
+            get_player_name_from_id(player_id, player_data) for player_id in roster.get("players", [])
+        ]
 
-    # Fetch weekly matchups
-    week = int(input("\nEnter week number for matchups: "))
-    matchups = get_matchups(league, week, player_data)
-    print(f"\nMatchups for Week {week}:")
-    for matchup in matchups:
-        print(f"Matchup: {matchup['team1_name']} vs {matchup['team2_name']}")
-        print(f"Team 1 Players:")
-        for player in matchup['team1_players']:
-            print(f" - {player}")
-        print(f"Team 2 Players:")
-        for player in matchup['team2_players']:
-            print(f" - {player}")
-        print("\n")
+        result += f"- {team_name}: {wins}-{losses} record, {points_for} points for\n"
+        result += f"  Roster: {', '.join(players_list)}\n"
 
-    # Fetch player scores for the given week
-    season_type = "regular"  # Can be "pre" or "regular"
-    season = 2024
-    player_scores = get_player_scores(league, player_data, season_type, season, week)
-    print("\nPlayer Scores:")
-    for score in player_scores:
-        print(f"Player: {score['player_name']}, Actual: {score['actual_score']}, Projected: {score['projected_score']}")
-
-    # Fetch transactions for the given week
-    transactions = get_transactions(league, player_data, week)
-    print(f"\nTransactions for Week {week}:")
-    for transaction in transactions:
-        print(f"Type: {transaction['type']}, Player: {transaction['player']}, Team: {transaction['team']}")
+    return result
 
 
 if __name__ == "__main__":
-    main()
+    get_league_info()
