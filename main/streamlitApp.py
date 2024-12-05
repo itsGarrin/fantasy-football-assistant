@@ -1,10 +1,11 @@
-import streamlit as st
 import random
 import time
 
+import streamlit as st
 from sleeper_wrapper import League
-from agent import NFLAgent  # Import your agent class
+
 import globals
+from agent import NFLAgent  # Import your agent class
 
 # Global variables to store league ID and team name
 global_league_id = None
@@ -26,11 +27,6 @@ def response_generator():
 # Sidebar for league and team selection
 st.sidebar.title("Fantasy League Settings")
 
-# Add a button to start a new chat
-if st.sidebar.button("Start New Chat"):
-    # Clear the chat history when the button is clicked
-    st.session_state.messages = []
-
 # Step 1: Enter League ID
 global_league_id = st.sidebar.text_input("Enter League ID", key="league_id")
 
@@ -41,7 +37,6 @@ if global_league_id:
     users = league.get_users()
 
     if users:
-        print(users)
         display_names = [user["display_name"] for user in users if "display_name" in user]
         # Step 3: Dropdown for team selection
         global_team_name = st.sidebar.selectbox("Select Your Team", display_names, key="team_name")
@@ -63,6 +58,12 @@ else:
 st.title("Fantasy Football Chat Assistant")
 
 if nfl_agent:
+    # Add a button to start a new chat
+    if st.sidebar.button("Start New Chat"):
+        # Clear the chat history when the button is clicked
+        st.session_state.messages = []
+        nfl_agent.reset()
+
     # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -81,7 +82,7 @@ if nfl_agent:
             st.write(prompt)
 
         # Use the agent to generate a response
-        response = nfl_agent.run_openai(prompt)
+        response = nfl_agent.run(prompt, verbose=True)
         print(response)
         with st.chat_message("assistant"):
             st.write(response)
