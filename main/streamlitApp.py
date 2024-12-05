@@ -3,14 +3,12 @@ import random
 import time
 
 from sleeper_wrapper import League
-
 from agent import NFLAgent  # Import your agent class
 import globals
 
 # Global variables to store league ID and team name
 global_league_id = None
 global_team_name = None
-
 
 # Streamed response emulator
 def response_generator():
@@ -25,9 +23,13 @@ def response_generator():
         yield word + " "
         time.sleep(0.05)
 
-
 # Sidebar for league and team selection
 st.sidebar.title("Fantasy League Settings")
+
+# Add a button to start a new chat
+if st.sidebar.button("Start New Chat"):
+    # Clear the chat history when the button is clicked
+    st.session_state.messages = []
 
 # Step 1: Enter League ID
 global_league_id = st.sidebar.text_input("Enter League ID", key="league_id")
@@ -68,7 +70,7 @@ if nfl_agent:
     # Display chat messages from history on app rerun
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+            st.write(message["content"])
 
     # Accept user input
     if prompt := st.chat_input("Ask me anything about your league or players!"):
@@ -76,13 +78,15 @@ if nfl_agent:
         st.session_state.messages.append({"role": "user", "content": prompt})
         # Display user message in chat message container
         with st.chat_message("user"):
-            st.markdown(prompt)
+            st.write(prompt)
 
         # Use the agent to generate a response
-        response = nfl_agent.run(prompt)
+        response = nfl_agent.run_openai(prompt)
+        print(response)
         with st.chat_message("assistant"):
-            st.markdown(response)
+            st.write(response)
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response})
+
 else:
     st.write("Please provide a valid League ID and select a team in the sidebar to start chatting.")

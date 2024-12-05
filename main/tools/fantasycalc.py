@@ -1,3 +1,5 @@
+import os
+
 import nfl_data_py as nfl
 import pandas as pd
 
@@ -20,7 +22,8 @@ def get_value(player_name: str) -> str:
     
     # read from csv file python
     # df = pd.read_csv(f'fantasy_calc_rankings/{self.league_type_string}_{self.ppr_value}_{self.league_size}.csv', sep=';')
-    df = pd.read_csv('../fantasy_calc_rankings/fantasycalc_redraft_rankings.csv', sep=';')
+    file_path = os.path.join(os.path.dirname(__file__), '..', 'fantasy_calc_rankings', 'fantasycalc_redraft_rankings.csv')
+    df = pd.read_csv(file_path, sep=';')
     df = df[df['sleeperId'] == sleeper_id]
 
     if df.empty:
