@@ -302,7 +302,8 @@ def get_top_waiver_wire_players_by_position(league, season_type, season, week, p
 
 
 def get_league_info():
-    league_id = 1131774234440876032
+    league_id = globals.get_league_id()
+    team_name = globals.get_team_name()
     league = League(league_id)
 
     # Get league settings
@@ -323,7 +324,6 @@ def get_league_info():
     rosters = league.get_rosters()
 
     # Highlight user's team
-    team_name = "itsGarrin"
     user_roster = get_team_roster(team_name, league, player_data)
 
     if user_roster:
