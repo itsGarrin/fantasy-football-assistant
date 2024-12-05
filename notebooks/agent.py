@@ -29,10 +29,12 @@ ids = nfl.import_ids()
 SYSTEM_PROMPT = """
 You are a knowledgeable fantasy football assistant. When making decisions, do not use outside data, instead use the tools provided.
 Try to provide specific information about the players such as their value, stats, etc. 
-For any players a user asks about, you should call both the get_value and get_nfl_stats tools.
+For any players a user asks about, you should call both the get_value and get_nfl_stats tools in addition to any other tools you think are necessary.
 
 If you can't find a player or are unsure of who they mean, ask the user for clarification on the name of the player.
 Always answer the user's question to the best of your ability.
+
+Use the Sleeper league information to provide context about the league the user is in. Always give advice in the perspective of the user and their opponents.
 """
 
 SYSTEM_PROMPT += get_league_info()
@@ -69,6 +71,43 @@ get_value_tool = {
             'required': ['player_name'],
             'properties': {
                 'player_name': {'type': 'string', 'description': 'The name of the player'},
+            },
+        },
+    },
+}
+
+get_player_projected_points_tool = {
+    'type': 'function',
+    'function': {
+        'name': 'get_player_projected_points',
+        'description': 'Get the projected points for a player',
+        'parameters': {
+            'type': 'object',
+            'required': ['player_name', 'season_type', 'season', 'week'],
+            'properties': {
+                'player_name': {'type': 'string', 'description': 'The name of the player'},
+                'season': {'type': 'integer', 'description': 'The season year'},
+                'week': {'type': 'integer', 'description': 'The week number'},
+                'scoring_format': {'type': 'string', 'description': 'The scoring format'},
+            },
+        },
+    },
+}
+
+get_player_total_projected_points_tool = {
+    'type': 'function',
+    'function': {
+        'name': 'get_player_total_projected_points',
+        'description': 'Get the total projected points for a player',
+        'parameters': {
+            'type': 'object',
+            'required': ['player_name', 'season_type', 'season', 'current_week', 'total_weeks'],
+            'properties': {
+                'player_name': {'type': 'string', 'description': 'The name of the player'},
+                'season': {'type': 'integer', 'description': 'The season year'},
+                'current_week': {'type': 'integer', 'description': 'The current week'},
+                'total_weeks': {'type': 'integer', 'description': 'The total number of weeks'},
+                'scoring_format': {'type': 'string', 'description': 'The scoring format'},
             },
         },
     },
@@ -204,7 +243,7 @@ def calculate_accuracy(benchmark_data, test_func):
 
 # print(calculate_accuracy(benchmark_data, basic_llama))
 # print(calculate_accuracy(benchmark_data, nfl_agent.test_interface))
-nfl_agent.test_interface("should i get trey lance?", "no", verbose=True)
+nfl_agent.test_interface("what are my top performing players?", "no", verbose=True)
 
 
 # different prompts for 
