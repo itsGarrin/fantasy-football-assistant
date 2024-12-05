@@ -204,7 +204,7 @@ def calculate_accuracy(benchmark_data, test_func):
 
 # print(calculate_accuracy(benchmark_data, basic_llama))
 # print(calculate_accuracy(benchmark_data, nfl_agent.test_interface))
-nfl_agent.test_interface("can you compare travis etienne to bucky irving?", "no", verbose=True)
+nfl_agent.test_interface("should i get trey lance?", "no", verbose=True)
 
 
 # different prompts for 

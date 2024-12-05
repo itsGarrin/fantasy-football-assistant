@@ -1,5 +1,5 @@
 import nfl_data_py as nfl
-from fuzzywuzzy import process
+from fuzzywuzzy import process, fuzz
 
 stats = nfl.import_weekly_data([2024])
 
