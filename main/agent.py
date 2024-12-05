@@ -44,20 +44,18 @@ You are a knowledgeable fantasy football assistant. You have been given a prompt
 
 Always answer the user's question to the best of your ability.
 
-Try to call as many tools as possible to provide the most amount of information to the LLM. 
+Try to call as many tools as possible to get the most amount of information. 
 Make sure the information is relevant to the prompt and the tools you are calling are appropriate for the task at hand.
 For the get_player_projected_points tool, make sure to provide week numbers as a comma separated string, for example, "12,13,14".
 
 It is currently week 14 of the 2024 NFL season. 
 
-For each tool call, provide the information in a clear and concise manner. 
-
 A player name is a string that contains the full name of the player. For example, "Christian McCaffrey" is a valid player name. Do not use "player1" or "every player" as player names, or any variables.
 You can call tools as many times as you want.
 
-A good fantasy performance is a performance that is above average for that player's position.
-
 Use the Sleeper league information to provide context about the league the user is in. Always answer questions from the perspective of the users team.
+
+Respond to the user with a human readable and informative response.
 """
 # Use the Sleeper league information to provide context about the league the user is in. Always give advice in the perspective of the user and their opponents.
 SYSTEM_PROMPT += get_league_info()
@@ -129,8 +127,8 @@ def load_benchmark(file_path):
     with open(file_path, 'r') as file:
         return yaml.safe_load(file)
 
-# benchmark_file = '../benchmarking/benchmark.yaml'
-# benchmark_data = load_benchmark(benchmark_file)
+benchmark_file = '../benchmarking/benchmark.yaml'
+benchmark_data = load_benchmark(benchmark_file)
 
 client = OpenAI(base_url=os.getenv("URL"), api_key=os.getenv("KEY"))
 
@@ -164,7 +162,7 @@ def calculate_accuracy(benchmark_data, test_func):
 
 # print(calculate_accuracy(benchmark_data, basic_llama))
 # print(calculate_accuracy(benchmark_data, nfl_agent.test_interface))
-nfl_agent.run("Can you get me the stats in the last 2 games for each player on my team?", verbose=True)
+nfl_agent.run("Should I start Jordan Love or Deshaun Watson?", verbose=True)
 
 
 # different prompts for 

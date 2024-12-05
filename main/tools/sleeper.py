@@ -15,7 +15,7 @@ def get_player_projected_points(player_name: str, season : int, weeks : str) -> 
         The full name of the player (case insensitive).
     season : int
         The season year (e.g., 2024).
-    week : str
+    weeks : str
         The week numbers for which to retrieve projections. Must be a comma-separated string of week numbers, for example, "1,2,3".
 
     Returns:
