@@ -34,10 +34,13 @@ For any players a user asks about, you should call both the get_value and get_nf
 If you can't find a player or are unsure of who they mean, ask the user for clarification on the name of the player.
 Always answer the user's question to the best of your ability.
 
-Use the Sleeper league information to provide context about the league the user is in. Always give advice in the perspective of the user and their opponents.
-"""
+It is currently week 14 of the 2024 NFL season. 
 
-SYSTEM_PROMPT += get_league_info()
+The league the user is in is a 12 team PPR league.
+"""
+get_league_info()
+# Use the Sleeper league information to provide context about the league the user is in. Always give advice in the perspective of the user and their opponents.
+# SYSTEM_PROMPT += get_league_info()
 
 available_functions = {
     'get_value': get_value,
@@ -176,7 +179,7 @@ def calculate_accuracy(benchmark_data, test_func):
 
 # print(calculate_accuracy(benchmark_data, basic_llama))
 # print(calculate_accuracy(benchmark_data, nfl_agent.test_interface))
-nfl_agent.test_interface("Who is on my team?", "no", verbose=True)
+nfl_agent.run("How many points is Bijan Robinson projected next week?", verbose=True)
 
 
 # different prompts for 

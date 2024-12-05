@@ -16,12 +16,8 @@ def get_value(player_name: str) -> str:
     Returns:
        int: The value of a player ranging from 0-10000
     """
-    player_name = utils.convert_player_name(player_name)
-    try:
-        sleeper_id = ids[ids["name"] == player_name]["sleeper_id"].iloc[0]
-    except IndexError:
-        return "The value of " + player_name + " is either not available or equal to 0."
-
+    sleeper_id = utils.convert_player_name_to_sleeper_id(player_name)
+    
     # read from csv file python
     # df = pd.read_csv(f'fantasy_calc_rankings/{self.league_type_string}_{self.ppr_value}_{self.league_size}.csv', sep=';')
     df = pd.read_csv('../fantasy_calc_rankings/fantasycalc_redraft_rankings.csv', sep=';')

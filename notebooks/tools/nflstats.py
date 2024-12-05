@@ -3,20 +3,22 @@ import json
 import nfl_data_py as nfl
 
 import tools.utils as utils
-
+import globals
 stats = nfl.import_weekly_data([2024])
 
-def get_nfl_stats(player_name: str) -> str:
+def get_nfl_stats(player_name: str, num_games: int) -> str:
     """
     Gets the stats for the last n games of a player
 
     Args:
         player_name (str): The name of the player
+        num_games (int): The number of games to get stats for
 
     Returns:
         str: The stats for the player
     """
     player_name = utils.convert_player_name(player_name)
+    num_games = int(num_games)
 
     player_stats = stats[stats["player_display_name"] == player_name]
 
@@ -25,8 +27,15 @@ def get_nfl_stats(player_name: str) -> str:
 
     first_n_rows = player_stats.to_dict(orient='records')
     first_n_rows.reverse()
-    first_n_rows = first_n_rows[:4]
+    first_n_rows = first_n_rows[:num_games]
+    scoring_type = globals.get_scoring_type()
     keys_to_keep = ['recent_team', 'position', 'week', 'opponent_team', 'fantasy_points', 'passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receptions', 'receiving_yards', 'receiving_tds', 'fantasy_points_ppr']
+
+    if scoring_type == 0.5 or scoring_type == 0:
+        keys_to_keep.remove('fantasy_points_ppr')
+    else:
+        keys_to_keep.remove('fantasy_points')
+
     stats_string = '\n'
     stats_string += f'---------- Recent Stats for {player_name} ----------\n'
     for elem in first_n_rows:
@@ -57,9 +66,10 @@ get_nfl_stats_tool = {
         'description': 'Get the stats for a player',
         'parameters': {
             'type': 'object',
-            'required': ['player_name'],
+            'required': ['player_name', 'num_games'],
             'properties': {
                 'player_name': {'type': 'string', 'description': 'The name of the player'},
+                'num_games': {'type': 'integer', 'description': 'The number of games to get stats for'}
             },
         },
     },

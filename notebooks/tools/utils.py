@@ -16,3 +16,22 @@ def convert_player_name(player_name: str) -> str:
         return scores[0][0]
     else:
         return player_name
+    
+
+def convert_player_name_to_sleeper_id(player_name: str) -> int:
+    ids = nfl.import_ids()
+    player_name = convert_player_name(player_name)
+    try:
+        sleeper_id = ids[ids["name"] == player_name]["sleeper_id"].iloc[0]
+    except IndexError:
+        return "The value of " + player_name + " is either not available or equal to 0."
+
+    return int(sleeper_id)
+
+def convert_scoring_type_to_text(scoring_type: int) -> str:
+    if scoring_type == 1:
+        return "ppr"
+    elif scoring_type == 0.5:
+        return "half_ppr"
+    else:
+        return "std"

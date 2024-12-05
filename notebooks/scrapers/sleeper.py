@@ -1,5 +1,5 @@
 from sleeper_wrapper import League, Players, Stats
-
+import globals
 
 def get_player_name_from_id(player_id, player_data):
     """Convert Sleeper player ID to full name, or return the player ID if it's not numeric."""
@@ -308,6 +308,7 @@ def get_league_info():
     # Get league settings
     league_settings = get_league_settings(league)
     scoring_type = league_settings.get("scoring_settings", {}).get("rec", "Unknown")
+    globals.set_scoring_type(scoring_type)
     num_teams = league_settings.get("num_teams", 0)
     playoff_week_start = league_settings.get("playoff_week_start", "Unknown")
     result = f"League is a {scoring_type} PPR, {num_teams}-team league.\n"

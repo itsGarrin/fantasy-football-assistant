@@ -1,10 +1,11 @@
 from sleeper_wrapper import Stats, Players
-
+import tools.utils as utils
+import globals
 player_data = Players().get_all_players()
 season_type = "regular"
 
 
-def get_player_projected_points(player_name, season, week, scoring_format="ppr"):
+def get_player_projected_points(player_name: str, season : int, week : int) -> str:
     """
     Retrieve the projected fantasy points for a specific player for the given match week.
 
@@ -16,18 +17,11 @@ def get_player_projected_points(player_name, season, week, scoring_format="ppr")
         The season year (e.g., 2024).
     week : int
         The week number for which to retrieve projections (e.g., 1-17 for regular season).
-    scoring_format : str, optional
-        The scoring format for projections (default is "ppr"). Options include:
-        - "ppr" for points per reception
-        - "half_ppr" for half points per reception
-        - "standard" for no points per reception
 
     Returns:
     -------
-    float
-        The projected fantasy points for the player in the specified week and scoring format.
-    str
-        If the player's name is not found in the dataset, a descriptive error message is returned.
+    str:
+        The projected fantasy points for the player in the specified week.
 
     Notes:
     ------
@@ -38,22 +32,25 @@ def get_player_projected_points(player_name, season, week, scoring_format="ppr")
     Examples:
     ---------
     >>> get_player_projected_points("Christian McCaffrey", 2024, 8)
-    22.5
+    Christian McCaffrey is projected to score 20.5 points in week 8.
     >>> get_player_projected_points("Nonexistent Player", 2024, 8)
     "Player 'Nonexistent Player' not found."
     """
+    player_name = utils.convert_player_name(player_name)
     stats = Stats()
     week_projections = stats.get_week_projections(season_type, season, week)
 
-    # Find player ID from the name
-    player_id = next(
-        (pid for pid, pdata in player_data.items() if pdata.get("full_name").lower() == player_name.lower()), None)
+    player_id = utils.convert_player_name_to_sleeper_id(player_name)
 
     if not player_id:
         return f"Player '{player_name}' not found."
 
+    scoring_format = utils.convert_scoring_type_to_text(globals.get_scoring_type())
+
+    print(week_projections.get(str(player_id), {}), player_id)
+
     projected_points = week_projections.get(str(player_id), {}).get(f"pts_{scoring_format}", 0)
-    return projected_points
+    return f"{player_name} is projected to score {projected_points} points in week {week}."
 
 def get_player_total_projected_points(player_name, season, current_week, total_weeks=17, scoring_format="ppr"):
     """
@@ -95,6 +92,8 @@ def get_player_total_projected_points(player_name, season, current_week, total_w
     >>> get_player_total_projected_points("Nonexistent Player", 2024, 8)
     "Player 'Nonexistent Player' not found."
     """
+    player_name = utils.convert_player_name(player_name)
+
     stats = Stats()
     total_projected_points = 0
 
